@@ -1,0 +1,15 @@
+# Julia generated files
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+Manifest.toml
+Posts/
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# VS Code
+.vscode/
+
+# Temporary files
+*.tmp
+*.bak
