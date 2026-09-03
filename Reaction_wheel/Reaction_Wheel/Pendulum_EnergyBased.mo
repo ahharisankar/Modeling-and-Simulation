@@ -1,10 +1,24 @@
-model My_Pendulum
+within Reaction_Wheel;
+
+model Pendulum_EnergyBased
 parameter Real Kp = 11.0;   // must exceed M_grav ≈ 1.66 to overcome gravity
 parameter Real Kd = 0.9;
-
+parameter Real g      = 9.81;
+parameter Real m_p    = 0.52;
+parameter Real m_w    = 0.30;
+parameter Real L      = 0.30;
+parameter Real J1     = 0.043;                 // pendulum inertia about pivot
+parameter Real M_grav = (m_p/2 + m_w)*g*L;   // ≈ 1.65 N·m
+parameter Real k_E   = 2.0;    // energy pump gain
+parameter Real th_sw = 0.25;   // switch band near the top [rad]
+Real E;
+Real E_top;
 Modelica.Blocks.Sources.RealExpression pdLaw(
-    y = Kp*(revolute.phi - Modelica.Constants.pi/2) + Kd*revolute.w)annotation(
-    Placement(transformation(origin = {47.0112, 34.9507}, extent = {{-26.2622, -28.2852}, {26.2622, 28.2852}}, rotation = -90)));
+    y = if abs(revolute.phi - Modelica.Constants.pi/2) < th_sw
+        then Kp*(revolute.phi - Modelica.Constants.pi/2) + Kd*revolute.w   // PD: catch & hold near top
+        else k_E*(E - E_top)*revolute.w)                                   // energy pump: far from top
+        annotation(
+    Placement(transformation(origin = {89.0112, 72.9507}, extent = {{-26.2622, -28.2852}, {26.2622, 28.2852}}, rotation = -90)));
   Modelica.Mechanics.MultiBody.Parts.Fixed fixed annotation(
     Placement(transformation(origin = {-10, 66}, extent = {{-10, -10}, {10, 10}}, rotation = -90)));
   Modelica.Mechanics.MultiBody.Joints.Revolute revolute(phi(start = -1.5708, fixed = true, displayUnit = "rad"), w(start = 0, fixed = true))  annotation(
@@ -19,7 +33,11 @@ Modelica.Blocks.Sources.RealExpression pdLaw(
     Placement(transformation(origin = {-10, -54}, extent = {{-10, -10}, {10, 10}}, rotation = -90)));
   Modelica.Mechanics.Rotational.Sources.Torque torque(useSupport = false)  annotation(
     Placement(transformation(origin = {22, -24}, extent = {{10, -10}, {-10, 10}})));
+  Modelica.Blocks.Nonlinear.Limiter limiter(uMax = 0.005)  annotation(
+    Placement(transformation(origin = {90, 10}, extent = {{-10, -10}, {10, 10}}, rotation = -90)));
 equation
+  E     = 0.5*J1*revolute.w^2 + M_grav*sin(revolute.phi);
+  E_top = M_grav;
   connect(revolute.frame_a, fixed.frame_b) annotation(
     Line(points = {{-10, 44}, {-10, 56}}, color = {95, 95, 95}));
   connect(revolute.frame_b, pendulum.frame_a) annotation(
@@ -30,9 +48,11 @@ equation
     Line(points = {{-10, -34}, {-10, -44}}, color = {95, 95, 95}));
   connect(torque.flange, wheelJoint.axis) annotation(
     Line(points = {{12, -24}, {0, -24}}));
-  connect(pdLaw.y, torque.tau) annotation(
-    Line(points = {{47, 6}, {47.5, 6}, {47.5, -24}, {34, -24}}, color = {0, 0, 127}));
+  connect(pdLaw.y, limiter.u) annotation(
+    Line(points = {{90, 44}, {90, 22}}, color = {0, 0, 127}));
+  connect(limiter.y, torque.tau) annotation(
+    Line(points = {{90, 0}, {91, 0}, {91, -24}, {34, -24}}, color = {0, 0, 127}));
   annotation(
     uses(Modelica(version = "4.1.0")),
   experiment(StartTime = 0, StopTime = 10, Tolerance = 1e-06, Interval = 0.02));
-end My_Pendulum;
+end Pendulum_EnergyBased;
