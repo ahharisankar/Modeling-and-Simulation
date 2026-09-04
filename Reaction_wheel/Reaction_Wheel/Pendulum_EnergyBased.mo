@@ -33,7 +33,7 @@ Modelica.Blocks.Sources.RealExpression pdLaw(
     Placement(transformation(origin = {-10, -54}, extent = {{-10, -10}, {10, 10}}, rotation = -90)));
   Modelica.Mechanics.Rotational.Sources.Torque torque(useSupport = false)  annotation(
     Placement(transformation(origin = {22, -24}, extent = {{10, -10}, {-10, 10}})));
-  Modelica.Blocks.Nonlinear.Limiter limiter(uMax = 0.005)  annotation(
+  Modelica.Blocks.Nonlinear.Limiter limiter(uMax = 0.5)  annotation(
     Placement(transformation(origin = {90, 10}, extent = {{-10, -10}, {10, 10}}, rotation = -90)));
 equation
   E     = 0.5*J1*revolute.w^2 + M_grav*sin(revolute.phi);
